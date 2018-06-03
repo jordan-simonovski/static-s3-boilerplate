@@ -1,0 +1,1 @@
+# static-s3-boilerplate
