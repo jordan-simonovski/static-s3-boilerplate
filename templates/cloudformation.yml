@@ -1,0 +1,105 @@
+AWSTemplateFormatVersion: '2010-09-09'
+
+Parameters:
+  AppName:
+    Type: String
+    Description: The name of the site you're deploying
+  HostedZoneName:
+    Type: String
+    Description: An existing hosted zone that you currently have in Route 53 (e.g. myawesomesite.com.)
+  BucketName:
+    Type: String
+    Description: A unique bucket name to deploy your static content to. Cannot contain uppercase characters.
+  SubDomain:
+    Type: String
+    Description: The Subdomain belonging to the hosted zone. This will resolve to <subdomain>.myawesomesite.com depending on the
+  ACMCertificateARN:
+    Type: String
+    Description: The ARN of your certificate in ACM. Must be us-east-1 to work with CloudFront.
+  Environment:
+    Type: String
+    Default: stage
+    AllowedValues:
+      - stage
+      - prod
+
+Conditions:
+  IsProduction:
+    !Equals [ !Ref Environment, prod]
+
+Resources:
+  AccessIdentity:
+    Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
+    Properties:
+      CloudFrontOriginAccessIdentityConfig:
+        Comment: !Sub '${Environment}-${AppName}'
+  SiteBucket:
+    DependsOn:
+      - AccessIdentity
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref BucketName
+      CorsConfiguration:
+        CorsRules:
+          - AllowedOrigins:
+              - !If [IsProduction, !Sub "${SubDomain}.${HostedZoneName}", !Sub "${Environment}-${SubDomain}.${HostedZoneName}"]
+            AllowedMethods:
+              - GET
+            MaxAge: 3000
+  BucketPolicy:
+    DependsOn:
+      - AccessIdentity
+      - SiteBucket
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref SiteBucket
+      PolicyDocument:
+        Statement:
+          - Action:
+              - s3:getObject
+            Effect: Allow
+            Principal:
+              CanonicalUser: !GetAtt AccessIdentity.S3CanonicalUserId
+            Resource: !Sub "arn:aws:s3:::${BucketName}/*"
+  SiteCloudFront:
+    Type: AWS::CloudFront::Distribution
+    DependsOn:
+      - AccessIdentity
+      - BucketPolicy
+    Properties:
+      DistributionConfig:
+        Comment: !Sub "CF Distribution for ${AppName}"
+        ViewerCertificate:
+          AcmCertificateArn: !Ref ACMCertificateARN
+          SslSupportMethod: sni-only
+        Origins:
+        - DomainName: !GetAtt SiteBucket.DomainName
+          Id: S3Origin
+          S3OriginConfig:
+            OriginAccessIdentity: !Sub "origin-access-identity/cloudfront/${AccessIdentity}"
+        Enabled: true
+        HttpVersion: 'http2'
+        DefaultRootObject: index.html
+        Aliases:
+          - !If [IsProduction, !Sub "${SubDomain}.${HostedZoneName}", !Sub "${Environment}-${SubDomain}.${HostedZoneName}"]
+        DefaultCacheBehavior:
+          AllowedMethods:
+            - GET
+            - HEAD
+          Compress: true
+          TargetOriginId: S3Origin
+          ForwardedValues:
+            QueryString: true
+            Cookies:
+              Forward: none
+          ViewerProtocolPolicy: redirect-to-https
+        PriceClass: PriceClass_All
+  AppDNSRecord:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      Type: CNAME
+      TTL: 300
+      ResourceRecords:
+        - !GetAtt SiteCloudFront.DomainName
+      HostedZoneName: !Sub "${HostedZoneName}."
+      Name: !If [IsProduction, !Sub "${SubDomain}.${HostedZoneName}.", !Sub "${Environment}-${SubDomain}.${HostedZoneName}."]
