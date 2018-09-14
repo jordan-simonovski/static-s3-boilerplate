@@ -13,9 +13,9 @@ Parameters:
   SubDomain:
     Type: String
     Description: The Subdomain belonging to the hosted zone. This will resolve to <subdomain>.myawesomesite.com depending on the
-  ACMCertificateARN:
+  ACMCertificateId:
     Type: String
-    Description: The ARN of your certificate in ACM. Must be us-east-1 to work with CloudFront.
+    Description: The id of your certificate in ACM. Must be us-east-1 to work with CloudFront.
   Environment:
     Type: String
     Default: stage
@@ -38,7 +38,7 @@ Resources:
       - AccessIdentity
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Ref BucketName
+      BucketName: !Sub "${Environment}-${BucketName}"
       CorsConfiguration:
         CorsRules:
           - AllowedOrigins:
@@ -70,7 +70,7 @@ Resources:
       DistributionConfig:
         Comment: !Sub "CF Distribution for ${AppName}"
         ViewerCertificate:
-          AcmCertificateArn: !Ref ACMCertificateARN
+          AcmCertificateArn: !Sub "arn:aws:acm:us-east-1:${AWS::AccountId}:certificate/${ACMCertificateId}"
           SslSupportMethod: sni-only
         Origins:
         - DomainName: !GetAtt SiteBucket.DomainName
@@ -112,3 +112,13 @@ Resources:
         - !GetAtt SiteCloudFront.DomainName
       HostedZoneName: !Sub "${HostedZoneName}."
       Name: !If [IsProduction, !Sub "${SubDomain}.${HostedZoneName}.", !Sub "${Environment}-${SubDomain}.${HostedZoneName}."]
+
+Outputs:
+  BucketName:
+    Description: The bucket to reference when making a deployment
+    Value: !Sub "${Environment}-${BucketName}"
+  DistributionID:
+    Description: The Distribution ID you want to reference when purging cache
+    Value: !Ref SiteCloudFront
+  AppURL:
+    Description: The URL of the app

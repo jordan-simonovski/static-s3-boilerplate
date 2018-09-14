@@ -28,11 +28,7 @@ Both of those steps are relatively painless to set up in the AWS console.
 
 3. Invoke the setup of your infra with:
 ```
-./deploy-infra.sh -s <mystackname>
-
-OR 
-
-./deploy-infra.sh -s <mystacknamewithwaf> -w
+yarn cfn:staging
 ```
 4. Go grab a coffee or some food, or go and watch an episode of one of your favourite TV shows. The initial setup of all resources takes roughly 25min.
 
@@ -40,11 +36,7 @@ OR
 
 6. Push your files to the bucket with
 ```
-./deploy-site.sh -b <mybucketname>
-
-if you also want to invalidate your cache (in most cases you will), you'll need to get your CloudFront Distribution ID (you can easily find it under your stack resources), then run
-
-./deploy-site.sh -b <mybucketname> -i -d <mydistributionid>
+deploy:staging
 ```
 
 ## Cost
