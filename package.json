@@ -8,8 +8,8 @@
     "cfnwaf:staging": "AWS_REGION=ap-southeast-2 yarn cfn deploy s-<stack-name> templates/waf-cloudformation.yml --Environment=s --AppName=<app-name> --HostedZoneName=<hosted-zone-name> --BucketName=<bucket-name> --SubDomain=www --ACMCertificateId=<certificate-id> --IPCIDRRange=<public-ip-address>/32",
     "cfn:production": "AWS_REGION=ap-southeast-2 yarn cfn deploy p-<stack-name> templates/cloudformation.yml --Environment=p --AppName=<app-name> --HostedZoneName=<hosted-zone-name> --BucketName=<bucket-name> --SubDomain=www --ACMCertificateId=<certificate-id>",
     "cfnwaf:production": "AWS_REGION=ap-southeast-2 yarn cfn deploy p-<stack-name> templates/waf-cloudformation.yml --Environment=p --AppName=<app-name> --HostedZoneName=<hosted-zone-name> --BucketName=<bucket-name> --SubDomain=www --ACMCertificateId=<certificate-id> --IPCIDRRange=<public-ip-address>/32",
-    "deploy:staging": "yarn deploy-aws-s3-cloudfront --bucket s-<bucket-name> --distribution <distribution-id> --source dist/ --non-interactive",
-    "deploy:production": "yarn deploy-aws-s3-cloudfront --bucket p-<bucket-name> --distribution <distribution-id> --source dist/ --non-interactive"
+    "deploy:staging": "yarn deploy-aws-s3-cloudfront --bucket stage-<bucket-name> --distribution <distribution-id>--source dist/ --non-interactive",
+    "deploy:production": "yarn deploy-aws-s3-cloudfront --bucket production-<bucket-name> --distribution <distribution-id> --source dist/ --non-interactive"
   },
   "repository": {
     "type": "git",
