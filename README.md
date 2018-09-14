@@ -21,8 +21,8 @@ Both of those steps are relatively painless to set up in the AWS console.
     - AppName
     - HostedZoneName (do not include the full stop at the end of your hosted zone)
     - BucketName (all lowercase characters)
-    - SubDomain
-    - ACMCertificateARN
+    - SubDomain (e.g. www, staging, api, docs)
+    - ACMCertificateID (ID of your HTTPS certificate in ACM us-east-1 to work with CloudFront)
     - Environment (optional: defaults to stage if an environment not specified)
     - IPCIDRRange (conditional: only needed when setting up your infra with a WAF)
 

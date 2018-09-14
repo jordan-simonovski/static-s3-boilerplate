@@ -60,7 +60,7 @@ Resources:
             Effect: Allow
             Principal:
               CanonicalUser: !GetAtt AccessIdentity.S3CanonicalUserId
-            Resource: !Sub "arn:aws:s3:::${BucketName}/*"
+            Resource: !Sub "arn:aws:s3:::${Environment}-${BucketName}/*"
   SiteCloudFront:
     Type: AWS::CloudFront::Distribution
     DependsOn:
@@ -121,4 +121,5 @@ Outputs:
     Description: The Distribution ID you want to reference when purging cache
     Value: !Ref SiteCloudFront
   AppURL:
-    Description: The URL of the app
+    Description: The URL to access the app
+    Value: !Join ["",["https://", !Ref AppDNSRecord]]

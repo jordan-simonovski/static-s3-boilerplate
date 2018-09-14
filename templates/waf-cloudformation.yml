@@ -13,9 +13,9 @@ Parameters:
   SubDomain:
     Type: String
     Description: The Subdomain belonging to the hosted zone. This will resolve to <subdomain>.myawesomesite.com depending on the
-  ACMCertificateARN:
+  ACMCertificateId:
     Type: String
-    Description: The ARN of your certificate in ACM. Must be us-east-1 to work with CloudFront.
+    Description: The ID of your certificate in ACM. Must be us-east-1 to work with CloudFront.
   IPCIDRRange:
     Type: String
     Description: The CIDR range of the IP you wish to whitelist. (e.g. <public-ip-address>/32)
@@ -77,7 +77,7 @@ Resources:
       - AccessIdentity
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Ref BucketName
+      BucketName: !Sub "${Environment}-${BucketName}"
       CorsConfiguration:
         CorsRules:
           - AllowedOrigins:
@@ -99,7 +99,7 @@ Resources:
             Effect: Allow
             Principal:
               CanonicalUser: !GetAtt AccessIdentity.S3CanonicalUserId
-            Resource: !Sub "arn:aws:s3:::${BucketName}/*"
+            Resource: !Sub "arn:aws:s3:::${Environment}-${BucketName}/*"
   SiteCloudFront:
     Type: AWS::CloudFront::Distribution
     DependsOn:
@@ -110,7 +110,7 @@ Resources:
         Comment: !Sub "CF Distribution for ${AppName}"
         WebACLId: !Ref WebACL
         ViewerCertificate:
-          AcmCertificateArn: !Ref ACMCertificateARN
+          AcmCertificateArn: !Sub "arn:aws:acm:us-east-1:${AWS::AccountId}:certificate/${ACMCertificateId}"
           SslSupportMethod: sni-only
         Origins:
         - DomainName: !GetAtt SiteBucket.DomainName
@@ -152,3 +152,14 @@ Resources:
         - !GetAtt SiteCloudFront.DomainName
       HostedZoneName: !Sub "${HostedZoneName}."
       Name: !If [IsProduction, !Sub "${SubDomain}.${HostedZoneName}.", !Sub "${Environment}-${SubDomain}.${HostedZoneName}."]
+
+Outputs:
+  BucketName:
+    Description: The bucket to reference when making a deployment
+    Value: !Sub "${Environment}-${BucketName}"
+  DistributionID:
+    Description: The Distribution ID you want to reference when purging cache
+    Value: !Ref SiteCloudFront
+  AppURL:
+    Description: The URL to access the app
+    Value: !Join ["",["https://", !Ref AppDNSRecord]]
