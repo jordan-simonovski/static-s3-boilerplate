@@ -17,7 +17,7 @@ Both of those steps are relatively painless to set up in the AWS console.
 
 1. First you want to determine if you want this publicly accessible to the world or not. Given you're deploying a site to a S3 bucket which doesn't sit in a VPC, if you're setting something up in a testing environment (e.g. staging) and don't want it publicly accessible, you're going to want to use the `waf-cloudformation.yml` which sets up a Web Application Firewall that only allows access to an IP Range.
 
-2. You need to populate your parameter file. If you're setting everything up with a WAF, you're going to want to fill in the `waf-parameters.json`. The variables you need to populate under the `Value` key are
+2. You need to populate your parameter file. If you're setting everything up with a WAF, you're going to want to fill in the variables in the package.json. The variables you need to populate are:
     - AppName
     - HostedZoneName (do not include the full stop at the end of your hosted zone)
     - BucketName (all lowercase characters)
@@ -28,6 +28,8 @@ Both of those steps are relatively painless to set up in the AWS console.
 
 3. Invoke the setup of your infra with:
 ```
+yarn cfnwaf:staging
+OR 
 yarn cfn:staging
 ```
 4. Go grab a coffee or some food, or go and watch an episode of one of your favourite TV shows. The initial setup of all resources takes roughly 25min.
